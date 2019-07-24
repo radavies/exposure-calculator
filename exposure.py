@@ -149,19 +149,19 @@ def pressed():
 def second_button_pressed():
     # TODO: Change this method so that
     # selected one and two can't be the same
-    changed = False
-    for counter in range(0, 2):
-        if to_change[counter]:
-            to_change[counter] = False
-            to_change[counter+1] = True
-            changed = True
-            break
-
-    if not changed:
-        to_change[2] = False
-        to_change[0] = True
-
     if locked:
+        changed = False
+        for counter in range(0, 2):
+            if to_change[counter]:
+                to_change[counter] = False
+                to_change[counter+1] = True
+                changed = True
+                break
+
+        if not changed:
+            to_change[2] = False
+            to_change[0] = True
+
         update_screen()
 
 
