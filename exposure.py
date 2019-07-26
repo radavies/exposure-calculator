@@ -81,36 +81,78 @@ def get_new_value(index, clockwise):
     global fstop_index
     global shutter_index
     global iso_index
+
+    working_fstop_index = fstop_index
+    working_shutter_index = shutter_index
+    working_iso_index = iso_index
+
     if index is 0:
         if clockwise:
-            fstop_index += 1
-            if fstop_index > len(fstops) - 1:
-                fstop_index = len(fstops) - 1
+            working_fstop_index += 1
+            if working_fstop_index > len(fstops) - 1:
+                working_fstop_index = len(fstops) - 1
         else:
-            fstop_index -= 1
-            if fstop_index < 0:
-                fstop_index = 0
-        return fstops[fstop_index]
+            working_fstop_index -= 1
+            if working_fstop_index < 0:
+                working_fstop_index = 0
+        return {"value": fstops[working_fstop_index], "index": working_fstop_index}
     elif index is 1:
         if clockwise:
-            shutter_index += 1
-            if shutter_index > len(shutter) - 1:
-                shutter_index = len(shutter) - 1
+            working_shutter_index += 1
+            if working_shutter_index > len(shutter) - 1:
+                working_shutter_index = len(shutter) - 1
         else:
-            shutter_index -= 1
-            if shutter_index < 0:
-                shutter_index = 0
-        return shutter[shutter_index]
+            working_shutter_index -= 1
+            if working_shutter_index < 0:
+                working_shutter_index = 0
+        return {"value": shutter[working_shutter_index], "index": working_shutter_index}
     else:
         if clockwise:
-            iso_index += 1
-            if iso_index > len(iso) - 1:
-                iso_index = len(iso) - 1
+            working_iso_index += 1
+            if working_iso_index > len(iso) - 1:
+                working_iso_index = len(iso) - 1
         else:
-            iso_index -= 1
-            if iso_index < 0:
-                iso_index = 0
-        return iso[iso_index]
+            working_iso_index -= 1
+            if working_iso_index < 0:
+                working_iso_index = 0
+        return {"value": iso[working_iso_index], "index": working_iso_index}
+
+
+def update_index(index, new_value):
+    global fstop_index
+    global shutter_index
+    global iso_index
+
+    if index is 0:
+        fstop_index = new_value
+    elif index is 1:
+        shutter_index = new_value
+    else:
+        iso_index = new_value
+
+
+def decide_change_direction(user_index, auto_index, users_direction):
+    # Changing f/ update shutter
+    if user_index is 0 and auto_index is 1:
+        return not users_direction
+    # Changing f/ update iso
+    if user_index is 0 and auto_index is 2:
+        return users_direction
+
+    # Changing shutter update f/
+    if user_index is 1 and auto_index is 0:
+        return not users_direction
+
+    # Changing shutter update iso
+    if user_index is 1 and auto_index is 2:
+        return users_direction
+
+    # Changing iso update f/
+    if user_index is 2 and auto_index is 0:
+        return users_direction
+    # Changing iso update iso
+    if user_index is 2 and auto_index is 1:
+        return users_direction
 
 
 def released(btn):
@@ -195,6 +237,10 @@ def second_button_pressed():
 
 
 def rot():
+    global fstop_index
+    global shutter_index
+    global iso_index
+
     index_user_changed = 0
     index_auto_change = 0
     for counter in range(0, 3):
@@ -207,12 +253,27 @@ def rot():
             index_auto_change = counter
             break
 
-    clkstate = clk.value
-    dtstate = dt.value
+    clockwise = clk.value is dt.value
 
-    values[index_user_changed] = get_new_value(index_user_changed, clkstate is dtstate)
-    if locked:
-        values[index_auto_change] = get_new_value(index_auto_change, not(clkstate is dtstate))
+    user_changed_value_before = values[index_user_changed]
+    user_changed_value_and_index = get_new_value(index_user_changed, clockwise)
+
+    if locked and user_changed_value_before is not user_changed_value_and_index["value"]:
+
+        auto_changed_value_before = values[index_auto_change]
+        auto_changed_value_and_index = get_new_value(index_auto_change,
+                                                     decide_change_direction(index_user_changed,
+                                                                             index_auto_change,
+                                                                             clockwise)
+                                                     )
+        if auto_changed_value_before is not auto_changed_value_and_index["value"]:
+            values[index_user_changed] = user_changed_value_and_index["value"]
+            update_index(index_user_changed, user_changed_value_and_index["index"])
+            values[index_auto_change] = auto_changed_value_and_index["value"]
+            update_index(index_auto_change, auto_changed_value_and_index["index"])
+    else:
+        values[index_user_changed] = user_changed_value_and_index["value"]
+        update_index(index_user_changed, user_changed_value_and_index["index"])
 
     update_screen()
 
