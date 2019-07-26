@@ -150,7 +150,7 @@ def decide_change_direction(user_index, auto_index, users_direction):
     # Changing iso update f/
     if user_index is 2 and auto_index is 0:
         return users_direction
-    # Changing iso update iso
+    # Changing iso update shutter
     if user_index is 2 and auto_index is 1:
         return users_direction
 
