@@ -126,6 +126,15 @@ def held(btn):
     locked = not locked
     if locked:
         separator_char = "="
+        # selected ones can't be the same
+        for counter in range(0, 3):
+            if to_change[counter] is True and selected[counter] is True:
+                if counter < 2:
+                    to_change[counter] = False
+                    to_change[counter + 1] = True
+                else:
+                    to_change[2] = False
+                    to_change[0] = True
     else:
         separator_char = "|"
     update_screen()
@@ -143,12 +152,23 @@ def pressed():
     if not changed:
         selected[2] = False
         selected[0] = True
+
+    if locked:
+        # selected ones can't be the same
+        for counter in range(0, 3):
+            if selected[counter] is True and to_change[counter] is True:
+                if counter < 2:
+                    selected[counter] = False
+                    selected[counter + 1] = True
+                else:
+                    selected[2] = False
+                    selected[0] = True
+        update_screen()
+
     update_screen()
 
 
 def second_button_pressed():
-    # TODO: Change this method so that
-    # selected one and two can't be the same
     if locked:
         changed = False
         for counter in range(0, 2):
@@ -162,21 +182,37 @@ def second_button_pressed():
             to_change[2] = False
             to_change[0] = True
 
+        # selected ones can't be the same
+        for counter in range(0, 3):
+            if to_change[counter] is True and selected[counter] is True:
+                if counter < 2:
+                    to_change[counter] = False
+                    to_change[counter + 1] = True
+                else:
+                    to_change[2] = False
+                    to_change[0] = True
         update_screen()
 
 
 def rot():
-    index_to_update = 0
+    index_user_changed = 0
+    index_auto_change = 0
     for counter in range(0, 3):
         if selected[counter]:
-            index_to_update = counter
+            index_user_changed = counter
+            break
+
+    for counter in range(0, 3):
+        if to_change[counter]:
+            index_auto_change = counter
             break
 
     clkstate = clk.value
     dtstate = dt.value
 
-    if not locked:
-        values[index_to_update] = get_new_value(index_to_update, clkstate is dtstate)
+    values[index_user_changed] = get_new_value(index_user_changed, clkstate is dtstate)
+    if locked:
+        values[index_auto_change] = get_new_value(index_auto_change, not(clkstate is dtstate))
 
     update_screen()
 
